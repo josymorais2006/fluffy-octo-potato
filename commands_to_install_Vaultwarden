@@ -1,0 +1,113 @@
+• create a user and group on the Debian server.
+sudo adduser dockeruser
+groupadd docker
+sudo usermod -aG docker dockeruser
+sudo usermod -aG sudo dockeruser
+sudo usermod -aG docker dockeruser
+groups dockeruser
+
+
+sudo visudo
+dockeruser ALL=(ALL) NOPASSWD:ALL
+
+ctrl+U
+Ctrl + O
+
+
+	• Now we install the Docker packages with dockeruser user.
+
+su - dockeruser
+
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install docker.io -y
+sudo apt install docker-compose -y
+
+"We check if it is correctly installed."
+docker --version
+docker-compose --version
+
+
+	• as the root user, we will create the folder where the volume will be mounted, which we will reference in Docker.
+
+mkdir /vw-data
+chown dockeruser:docker /vw-data
+
+
+ls -l /var/run/docker.sock
+sudo chown root:docker /var/run/docker.sock
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo systemctl restart docker
+
+
+	• We start the image pull; here you can also create your .yml file, but I will do it the easier way.
+
+docker run -d --name vaultwarden -v /vw-data/:/data/ -p 80:80 vaultwarden/server:latest
+
+http://<ip_address>:80
+
+	• Now you need to follow the procedure in the video and create the domain on DuckDNS.
+
+
+The easiest way now is to download Nginx Proxy Manager to generate the certificate, which will also serve as your reverse proxy server.
+
+You need to create a docker-compose.yml file  with the content:
+
+version: '3.8'
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '8080:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+    environment:
+      # Mysql/Maria connection parameters:
+      DB_MYSQL_HOST: "db"
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: "npm"
+      DB_MYSQL_PASSWORD: "npm"
+      DB_MYSQL_NAME: "npm"
+      # Uncomment this if IPv6 is not enabled on your host
+      # DISABLE_IPV6: 'true'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    depends_on:
+      - db
+
+  db:
+    image: 'jc21/mariadb-aria:latest'
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 'npm'
+      MYSQL_DATABASE: 'npm'
+      MYSQL_USER: 'npm'
+      MYSQL_PASSWORD: 'npm'
+      MARIADB_AUTO_UPGRADE: '1'
+    volumes:
+      - ./mysql:/var/lib/mysql
+
+
+
+
+	• In the same directory where the file is located, type:
+
+docker-compose up -d
+
+Now you access the URL on the port you defined "http://<ip_address>:8080". Then you need to enter the following credentials:  
+**Email:** `admin@example.com`  
+**Password:** `changeme`  
+After that, make sure to change the credentials."
+
+The next step is to generate the certificate using Nginx Proxy Manager
+
+You need to provide the domain and the API key.
+
+
+
