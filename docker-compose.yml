@@ -1,0 +1,25 @@
+version: '3'
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      WEBSOCKET_ENABLED: ${WEBSOCKET_ENABLED}
+      ROCKET_TLS_CERTS: ${ROCKET_TLS_CERTS}
+      ROCKET_TLS_KEY: ${ROCKET_TLS_KEY}
+      LOG_FILE: ${LOG_FILE}
+      LOG_LEVEL: ${LOG_LEVEL}
+      SIGNUPS_ALLOWED: ${SIGNUPS_ALLOWED}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      DOMAIN: ${DOMAIN}
+      API_ENABLED: ${API_ENABLED}
+      ORG_EVENTS_ENABLED: ${ORG_EVENTS_ENABLED}
+    volumes:
+      - /vw-data/:/data/
+      - /certs/nginx-selfsigned.crt:/ssl/vaultwarden.crt:ro
+      - /certs/nginx-selfsigned.key:/ssl/vaultwarden.key:ro
+      - /vw-data/logs:/var/log/vaultwarden
